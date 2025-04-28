@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ulangan tengah semester</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+  <h1 class="text-center mb-4">project tugas praktek pemograman berbasis web </h1>
+  <div class="row">
+    <!-- Kolom Deskripsi -->
+    <div class="col-md-6">
+      <h3 id="todo-title">Deskripsi </h3>
+      <p id="todo-description" class="fs-5 text-muted">Masukkan nama program untuk melihat deskripsi di sini.</p>
+    </div>
+
+    <!-- Kolom Form + Tabel -->
+    <div class="col-md-6">
+      <!-- Form To-Do -->
+      <form id="todo-form" class="mb-4">
+        <div class="mb-3">
+          <label for="todo-name" class="form-label">Nama kegiatan</label>
+          <input type="text" class="form-control" id="todo-name" required oninput="showDescription()">
+        </div>
+        <div class="mb-3">
+          <label for="todo-date" class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="todo-date" required>
+        </div>
+        <button type="submit" class="btn btn-primary">simpan</button>
+      </form>
+
+      <!-- Tabel To-Do -->
+      <table class="table table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Nomor</th>
+            <th>Nama kegiatan</th>
+            <th>Tanggal</th>
+            <th>Checklist</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="todo-table-body">
+          <!-- Diisi dengan JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+  let todoDescriptions = {}; // Awalnya kosong, nanti diisi dari JSON
+  let todos = [];
+  let editIndex = -1;
+
+  const form = document.getElementById('todo-form');
+  const todoTableBody = document.getElementById('todo-table-body');
+  const todoTitle = document.getElementById('todo-title');
+  const todoDescription = document.getElementById('todo-description');
+
+  // Fetch deskripsi dari file JSON saat awal load
+  fetch('deskripsi.json')
+    .then(response => response.json())
+    .then(data => {
+      todoDescriptions = data;
+    })
+    .catch(error => {
+      console.error('Gagal load deskripsi:', error);
+    });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const name = document.getElementById('todo-name').value;
+    const date = document.getElementById('todo-date').value;
+
+    if (editIndex === -1) {
+      todos.push({ name, date, checked: false });
+    } else {
+      todos[editIndex].name = name;
+      todos[editIndex].date = date;
+      editIndex = -1;
+    }
+    
+    form.reset();
+    resetDescription();
+    renderTable();
+  });
+
+  function renderTable() {
+    todoTableBody.innerHTML = '';
+    todos.forEach((todo, index) => {
+      const row = `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${todo.name}</td>
+          <td>${todo.date}</td>
+          <td class="text-center">
+            <input type="checkbox" ${todo.checked ? 'checked' : ''} onclick="toggleCheck(${index})">
+          </td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="editTodo(${index})">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTodo(${index})">Hapus</button>
+          </td>
+        </tr>
+      `;
+      todoTableBody.innerHTML += row;
+    });
+  }
+
+  function toggleCheck(index) {
+    todos[index].checked = !todos[index].checked;
+    renderTable();
+  }
+
+  function editTodo(index) {
+    const todo = todos[index];
+    document.getElementById('todo-name').value = todo.name;
+    document.getElementById('todo-date').value = todo.date;
+    showDescription();
+    editIndex = index;
+  }
+
+  function deleteTodo(index) {
+    if (confirm('Yakin mau hapus to-do ini?')) {
+      todos.splice(index, 1);
+      renderTable();
+    }
+  }
+
+  function showDescription() {
+    const nameInput = document.getElementById('todo-name').value.trim();
+    if (nameInput in todoDescriptions) {
+      todoTitle.textContent = nameInput;
+      todoDescription.textContent = todoDescriptions[nameInput];
+    } else if (nameInput === "") {
+      resetDescription();
+    } else {
+      todoTitle.textContent = nameInput;
+      todoDescription.textContent = "Deskripsi tidak tersedia untuk to-do ini.";
+    }
+  }
+
+  function resetDescription() {
+    todoTitle.textContent = "Deskripsi To-Do";
+    todoDescription.textContent = "Masukkan nama To-Do untuk melihat deskripsi di sini.";
+  }
+</script>
+
+</body>
+</html>
